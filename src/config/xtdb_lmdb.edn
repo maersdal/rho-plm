@@ -1,0 +1,12 @@
+{:xtdb/index-store {:kv-store {:xtdb/module xtdb.lmdb/->kv-store
+                               :db-dir "/tmp/lmdbi"}}
+ :xtdb/document-store {:kv-store {:xtdb/module xtdb.lmdb/->kv-store
+                                  :db-dir "/tmp/lmdbd"}}
+ :xtdb/tx-log {:kv-store {:xtdb/module xtdb.lmdb/->kv-store
+                          :db-dir "/tmp/lmdbt"}}}
+#_{:xtdb/index-store {:kv-store {:xtdb/module xtdb.lmdb/->kv-store
+                                 :db-dir "/tmp/lmdbi"}}
+   :xtdb/document-store {:kv-store {:xtdb/module xtdb.lmdb/->kv-store
+                                    :db-dir "/tmp/lmdbd"}}
+   :xtdb/tx-log {:kv-store {:xtdb/module xtdb.lmdb/->kv-store
+                            :db-dir "/tmp/lmdbt"}}}

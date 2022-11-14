@@ -1,0 +1,11 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src"
+  "test"]
+ :deps {:aliases [:pedestal :backend :frontend :unsorted]}
+ :dev-http {8000 "public"} 
+ :builds
+ {:frontend
+  {:target :browser
+   :modules {:main {:init-fn eplme.frontend.rhoplm/init}}}}}
+;; TODO workon this ..
