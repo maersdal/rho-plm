@@ -2,13 +2,14 @@
 
 # rhoplm
 
-FIXME: Write a one-line description of your library/project.
+stem:[\rho\text{-plm}]
 
 ## Overview
 
-FIXME: Write a paragraph about the library/project and highlight its goals.
-
-rho-plm stem:[\rho\text{-plm}]
+rho-plm is intended to be an experiment to see what the minimal shim is for a product lifecycle management tool.
+On the top, there is the database, chosen to be xtdb, could maybe become something else in the future.
+At the bottom is lots of process information.
+The shim in the middle is this repository.
 
 project parts:
 
@@ -30,17 +31,32 @@ product analysis
 compatible with a modern IT infrastructure, that is, everybody using different tools for everything.
 All we need is an API...
 
+## Data model
+
+Everything is a graph, which evolves over time. 
+A product type with its different options is a graph 
+Firmware(code) for the product is a graph
+
+
+
 
 ### Stories
 
+#### a product
 If a certain configuration has an associated HIGHER failure rate, we would like to see it.
 the failure rate is calculated by some processing, and the configuration is the unique subtree of a service
+
+#### dev cycle
+"To track velocity, focus on functionality completed (not functionality worked on), focus on functionality delivered (not functionality requested or promised), focus on functionality used (not estimates of business value), track defects (and time spent on defects), track technical debt (not just having it and repaying it, but the consequences of having it) and so on. As in physics, velocity in software development is multidimensional." - Kevlin Henney  
+
+Is this a graph, or easily done with jira?
+
 
 ## Development
 
 To get an interactive development environment run:
 
-    clojure -A:fig:build
+ npx shadow-cljs watch frontend
 
 This will auto compile and send all changes to the browser without the
 need to reload. After the compilation process is complete, you will

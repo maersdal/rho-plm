@@ -1,0 +1,87 @@
+## Design
+
+.Main ideas
+* Product Lifecycle Management (PLM), Fleet Management, and similar processes have a common, high-level data structure
+** At any *_time_*, the state of a project is one or more graphs, where each node is a work-product related to the parent node.
+*** For example, the subassemblies of a project is one graph, while the firmware is another graph, and we can link these two graphs at the root node to make it a single graph.
+** A delivered product starts as a strict subgraph of the project, taken at a specific *_time_*.
+*** A delivered products graph can also evolve in time, for example change of service location, firmware updates, repairs, etc.
+* A system that lets you see the pieces of your projects does not need to store those pieces, they can be stored anywhere
+** A rejection of the 'all in one' big single database idea from other systems. The idea is from the age of mainframes, and is a serialized in processes that could be parallel.
+* Having a graph that links between all your orgs information is much, much better and can create better synergy than any vendor-specific tool.
+
+A designed item or work-product has pieces that fit together; seeing them all, and making them queriable is great.
+
+.The domain is defined as such:
+. The node represents an item. It could be
+.. A component
+.. A unit
+.. A subassembly
+.. A firmware version
+. The item has resources somewhere, and the node contains or links to these. The resources could be
+.. A subgraph of other nodes in the system
+.. The requirements
+.. Drawings, Images
+.. Link to a grafana dashboard showing time-series data for the thing
+. The vertices represents the trees of structure. It could be:
+.. The components available at certain times
+.. A particular manufacturing configuration
+.. The firmware tree
+
+The node is the basic unit, and it changes over time. The changes are all recorded in the database, so 
+a thing referring to a node might choose to use the valid time of that node..
+
+
+### MVP 
+
+* Smallest possible demo that shows that the bitemporal graph approach is useful
+* A UI where you can click onto each part of the firmware and electronics. 
+* state representations:
+** time, configuration 
+* typical questions:
+** where has unit 77 been with what firmwares ?
+** what firmwares are deployed ?
+** what electronics configurations are on which units ?
+
+
+Data entry comes later
+
+
+## Tech stack
+
+The tech stack has the goals of enabling a single developer to deliver powerful features in a reasonable amount of time
+and at the same time have good structure.
+
+.Tech stack
+* `deps.edn` dependency management.
+* Frontend:
+** `ClojureScript`
+** `shadow-cljs` for cljs development.
+** `re-frame` and `reagent` as the UI framework. 
+* Backend:
+** web services:
+*** `pedestal` for serving pages and apis
+*** `reitit` for routing
+*** Thinking of adding `pathom` for service resolution
+** databases and logic
+*** `xtdb` for a bitemporal graph database
+*** `engelberg/ubergraph` for graph manipulation and display
+**** needs `graphViz`
+* observability:
+** `mulog` for logging
+** `tufte` for profiling
+
+
+### Guides
+
+* https://day8.github.io/re-frame/dominoes-30k/ 
+* https://ericnormand.me/guide/re-frame-building-blocks
+
+
+* https://xtdb.com/learn/
+* https://github.com/Engelberg/ubergraph
+* https://github.com/BrunoBonacci/mulog
+
+### Ideas
+ 
+* Search, elaborate

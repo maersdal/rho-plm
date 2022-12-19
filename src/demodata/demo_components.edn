@@ -1,0 +1,136 @@
+[[{:xt/id :r2.electromechanical-assembly
+   :children [:r2.electronics :r2.mechatronics]}
+  #inst "2022-09-01"]
+ [{:xt/id :r2.mechatronics
+   :current-state :r&d
+   :children [:r2.motors
+              :r2.liquid-change-detector]}
+  #inst "2022-10-01"]
+ [{:xt/id :r2.electronics
+   :current-state :r&d
+   :children [:r2.electronics.power
+              :r2.electronics.physical.control
+              :r2.electronics.cloud
+              :r2.electronics.bluetooth
+              :r2.electronics.indicator]}
+  #inst "2022-10-01"]
+ [{:xt/id :r2.electronics.physical.control
+   :current-state :r&d
+   :components [:STMICRO32_MCU]
+   :children [:pc.hand-sensor
+              :r2.liquid-change-detector
+              :r2.motor-driver-circuit]}
+  #inst "2022-10-07"]
+ [{:xt/id :r2.electronics.power
+   :current-state :r&d
+   :children [:5vreg
+              :3v3reg]}
+  #inst "2022-10-01"]
+ [{:xt/id :r2.liquid-change-detector
+   :current-state :r&d
+   :notes ["Capacitor discharged by removing liquid container, sensed and driven by mcu"]}
+  #inst "2022-10-15"]
+ [{:xt/id :r2.motors
+   :current-state :testing
+   :name "Generic DC Motor"
+   :specs {:max-voltage-V 6
+           :stall-current-A 2}}
+  #inst "2022-10-01"]
+ [{:xt/id :r2.motor-driver-circuit
+   :current-state :r&d}
+  #inst "2022-10-14"]
+ [{:xt/id :r2.motor-driver-circuit
+   :current-state :testing
+   :notes ["built a prototype with a NMOS low-side switch"]
+   :children [:r2.motors]}
+  #inst "2022-11-14"]
+ [{:xt/id :5vreg}
+  #inst "2022-08-31"]
+ [{:xt/id :3v3reg}
+  #inst "2022-08-31"]
+ [{:xt/id :r2.electronics.cloud
+   :children [:nrf9160-sparkfun
+              :wifi-feather
+              :computer-feather]}
+  #inst "2022-10-15"]
+ [{:xt/id :nrf9160-sparkfun
+   :leaf true
+   :excludes #{:wifi-feather :computer-feather}
+   :notes ["Existing firmware must be repurposed"]}
+  #inst "2022-10-15"]
+ [{:xt/id :wifi-feather
+   :excludes #{:computer-feather :nrf9160-sparkfun}
+   :leaf true}
+  #inst "2022-10-15"]
+ [{:xt/id :computer-feather
+   :excludes #{:wifi-feather :nrf9160-sparkfun}
+   :leaf true}
+  #inst "2022-10-15"]
+ [{:xt/id :r2.electronics.indicator
+   :status :r&d
+   :nodes ["LED, blinks when things are happening"]}
+  #inst "2022-11-13"]
+ [{:xt/id :r2.electronics.bluetooth
+   :status :r&d
+   :nodes ["Selected nrf52840"]}
+  #inst "2022-08-31"]
+ [{:xt/id :r2.electronics.bluetooth
+   :status :testing
+   :nodes ["Basic architecture for data reduction is implemented"]}
+  #inst "2022-11-13"]
+ [{:xt/id :pc.hand-sensor}
+  #inst "2022-11-13"]
+ ;; The big change
+ [{:xt/id :r2.electronics
+   :current-state :r&d
+   :children [:r2.electronics.power
+              :r2.electronics.module]}
+  #inst "2022-12-10"]
+ [{:xt/id :r2.electronics.module
+   :components [:ESP32C3_MODULE]
+   :children [:r2.electronics.indicator
+              :r2.liquid-change-detector
+              :pc.hand-sensor]
+   :notes ["ESP32C3 module works fine, a bit much power consumption"]}
+  #inst "2022-12-08"]
+ [{:xt/id :r2.electronics.physical.control
+   :current-state :disbanded}
+  #inst "2022-12-11"]
+ [{:xt/id :r2.mechatronics
+   :current-state :disbanded}
+  #inst "2022-12-11"]
+ [{:xt/id :r2.electronics.cloud
+   :current-state :disbanded}
+  #inst "2022-12-11"]
+ [{:xt/id :r2.motor-driver-circuit
+   :current-state :r&d
+   :spec ["6V with 2A pulse"]
+   :children [:r2.motors]}
+  #inst "2022-12-12"]
+ [{:xt/id :r2.mechatronics
+   :current-state :disbanded}
+  #inst "2022-12-12"]
+ [{:xt/id :r2.electromechanical-assembly
+   :current-state :disbanded}
+  #inst "2022-12-13"]
+ [{:xt/id :r2.electronics.power
+   :current-state :r&d
+   :children [:6vsupply
+              :3v3reg]}
+  #inst "2022-12-13"]
+ [{:xt/id :6vsupply}
+  #inst "2022-12-13"]
+ [{:xt/id :6vsupply
+   :children [:r2.motor-driver-circuit]}
+  #inst "2022-12-14"]
+ [{:xt/id :r2.electronics.module
+   :components [:ESP32C3_MODULE]
+   :children [:r2.electronics.indicator
+              :r2.liquid-change-detector
+              :pc.hand-sensor
+              :r2.motor-driver-circuit]
+   :notes ["ESP32C3 module works fine, a bit much power consumption"]}
+  #inst "2022-12-14"]
+ [{:xt/id :3v3reg
+   :children [:r2.electronics.module]}
+  #inst "2022-12-13"]]

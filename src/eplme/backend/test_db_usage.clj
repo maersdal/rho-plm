@@ -1,9 +1,15 @@
 (ns eplme.backend.test-db-usage
-  (:require [eplme.backend.db-primitives :refer [graph-ids]]
+  (:require [clojure.edn :as edn]
+            [eplme.backend.component-graph :refer [create-graph-of
+                                                   get-edit-points-from-graph
+                                                   make-component-graph render-component-graph-history]]
+            [eplme.backend.db-primitives :refer [find-excludes graph-ids]]
+            [hyperfiddle.rcf :refer [tests]]
             [mount.core :as mount]
             [taoensso.tufte :as tufte]
-            [xtdb.api :as xt]
-            [ubergraph.alg :as uber-alg]))
+            [ubergraph.core :as uber]
+            [xtdb.api :as xt])
+  (:import [java.security MessageDigest]))
 
 (tufte/add-basic-println-handler! {})
 
@@ -12,175 +18,127 @@
 
 (def demo-components
   (mapv (fn [x]
-          (vec (cons ::xt/put (assoc-in x [0 :type] :r2.components))))
-        [[{:xt/id :r2.electromechanical-assembly
-           :children [:r2.electronics :r2.mechatronics]}
-          #inst "2022-09-01"]
-         [{:xt/id :r2.mechatronics
-           :current-state :r&d
-           :children [:r2.motors
-                      :r2.liquid-change-detector]}
-          #inst "2022-10-01"]
-         [{:xt/id :r2.electronics
-           :current-state :r&d
-           :children [:r2.electronics.power
-                      :r2.electronics.physical.control
-                      :r2.electronics.cloud
-                      :r2.electronics.bluetooth
-                      :r2.electronics.indicator]}
-          #inst "2022-10-01"]
-         [{:xt/id :r2.electronics.physical.control
-           :current-state :r&d
-           :components [:STMICRO32_MCU]
-           :children [:pc.hand-sensor
-                      :r2.liquid-change-detector
-                      :r2.motor-driver-circuit]}
-          #inst "2022-10-07"]
-         [{:xt/id :r2.electronics.power
-           :current-state :r&d
-           :children [:5vreg
-                      :3v3reg]}
-          #inst "2022-10-01"]
-         [{:xt/id :r2.liquid-change-detector
-           :current-state :r&d
-           :notes ["Capacitor discharged by removing liquid container, sensed and driven by mcu"]}
-          #inst "2022-10-15"]
-         [{:xt/id :r2.motors
-           :current-state :testing
-           :name "Generic DC Motor"
-           :specs {:max-voltage-V 6
-                   :stall-current-A 2}}
-          #inst "2022-10-01"]
-         [{:xt/id :r2.motor-driver-circuit
-           :current-state :r&d}
-          #inst "2022-10-14"]
-         [{:xt/id :r2.motor-driver-circuit
-           :current-state :testing
-           :notes ["built a prototype with a NMOS low-side switch"]
-           :children [:r2.motors]}
-          #inst "2022-11-14"]
-         [{:xt/id :5vreg}
-          #inst "2022-08-31"]
-         [{:xt/id :3v3reg}
-          #inst "2022-08-31"]
-         [{:xt/id :r2.electronics.cloud
-           :children [:nrf9160-sparkfun
-                      :wifi-feather
-                      :computer-feather]}
-          #inst "2022-10-15"]
-         [{:xt/id :nrf9160-sparkfun
-           :leaf true
-           :notes ["Existing firmware must be repurposed"]}
-          #inst "2022-10-15"]
-         [{:xt/id :wifi-feather
-           :leaf true}
-          #inst "2022-10-15"]
-         [{:xt/id :computer-feather
-           :leaf true}
-          #inst "2022-10-15"]
-         [{:xt/id :r2.electronics.indicator
-           :status :r&d
-           :nodes ["LED, blinks when things are happening"]}
-          #inst "2022-11-13"]
-         [{:xt/id :r2.electronics.bluetooth
-           :status :r&d
-           :nodes ["Selected nrf52840"]}
-          #inst "2022-08-31"]
-         [{:xt/id :r2.electronics.bluetooth
-           :status :testing
-           :nodes ["Basic architecture for data reduction is implemented"]}
-          #inst "2022-11-13"]
-         [{:xt/id :pc.hand-sensor}
-          #inst "2022-11-13"]]))
+          (vec (cons ::xt/put (assoc-in x [0 :component] :r2))))
+        (edn/read-string (slurp "src/demodata/demo_components.edn"))))
 
+(defn sha256 [string]
+  (let [digest (.digest (MessageDigest/getInstance "SHA-256") (.getBytes string "UTF-8"))]
+    (apply str (map (partial format "%02x") digest))))
 ;; GIT integration..uri
 (def demo-firmware
   (mapv (fn [x]
-          (vec (cons ::xt/put (assoc-in x [0 :type] :r2.firmware))))
+          (vec (cons ::xt/put (assoc-in x [0 :firmware] :r2))))
         [[{:xt/id :r2.algo-prototype-platform
            :notes ["Unix C codebase for evaluating algorithms"]
            :features ["Demo of radix tree 1 second rate-filter for bluetooth"]}
-          #inst "2022-11-14T14"]]))
-
+          #inst "2022-11-14T14"]
+         [{:xt/id :r2.algo-prototype-platform
+           :notes ["Unix C codebase for evaluating algorithms"]
+           :features ["Demo of radix tree 1 second rate-filter for bluetooth"]}
+          #inst "2022-11-14T14"]
+         [{:xt/id :r2.demo-failure
+           :commit-msg "first"
+           :sha (sha256 "first")}
+          #inst "2022-10-14T14"]
+         [{:xt/id :r2.demo-failure
+           :commit-msg "second"
+           :notes ["Failure introduced here for demonstration purposes"] ;; todo write example code on howto find this failure correlation
+           :sha (sha256 "second")}
+          #inst "2022-10-15T14"]
+         [{:xt/id :r2.demo-failure
+           :commit-msg "third"
+           :sha (sha256 "third")}
+          #inst "2022-10-16T14"]]))
 
 (xt/submit-tx node (vec (concat demo-firmware demo-components)))
 (xt/sync node)
+
+
+(def demo-configurations
+  (mapv (fn [x]
+          (vec (cons ::xt/put (assoc-in x [0 :configurations] :r2))))
+        [[{:xt/id :r.configs.2022.11.14
+           :config-snapshot-time #inst "2022-11-14T08"
+           :edges 'edges
+           :nodes 'nodes}
+          #inst "2022-11-14"]]))
+
+(xt/entity (xt/db node) :nrf9160-sparkfun)
+(xt/entity (xt/db node) :computer-feather)
+
+(find-excludes (xt/db node) :nrf9160-sparkfun)
+ 
+(defn create-configuration-from-graph [node g name]
+  )
+
+(comment
+  (def db (xt/db node))
+
+  (uber/pprint (make-component-graph (xt/db node #inst "2022-12-01T08") :r2))
+  (uber/pprint (make-component-graph (xt/db node #inst "2022-12-13T08") :r2))
+  (let [component-configuration-graph (make-component-graph node #inst "2022-11-14T08")] ;; still has a lot of choice
+    )
+  )
+
+(def demo-units
+  (mapv (fn [x]
+          (vec (cons ::xt/put (assoc-in x [0 :units] :r2))))
+        [[{:xt/id 1
+           :r.configuration :r.configs.2022.11.14
+           :r.firmware :r2.demo-failure
+           :firmware-sha (sha256 "third")}
+          #inst "2022-10-16T15"]
+         [{:xt/id 2
+           :r.configuration :r.configs.2022.11.14
+           :r.firmware :r2.demo-failure
+           :firmware-sha (sha256 "first")}
+          #inst "2022-10-14T15"]
+         [{:xt/id 2
+           :r.configuration :r.configs.2022.11.14
+           :r.firmware :r2.demo-failure
+           :firmware-sha (sha256 "second")}
+          #inst "2022-10-15T15"]
+         [{:xt/id 2 
+           :r.configuration :r.configs.2022.11.14
+           :r.firmware :r2.demo-failure
+           :firmware-sha (sha256 "third")}
+          #inst "2022-10-16T15"]]))
+
+(xt/submit-tx node (vec (concat demo-configurations demo-units)))
+(xt/sync node)
+
+
 (xt/entity-history (xt/db node) :r2.electronics.power :desc {:with-docs? true})
 ;;  Now... list which ids have children that are NOT listed. 
-(require '[ubergraph.core :as uber])
-(require '[ubergraph.alg :as uber-alg])
 (seq (xt/q (xt/db node) graph-ids)) ;; edges...
 (xt/q (xt/db node) '{:find [e]
                      :where [[e :xt/id]
-                             [e :type :r2.components]]})
-(def g (let [nodes (reduce concat (xt/q (xt/db node) '{:find [e]
-                                                        :where [[e :xt/id]
-                                                                [parent :type :r2.components]]}))
-             edges (seq (xt/q (xt/db node) (update graph-ids :where (fn [x] (vec (conj x ['parent :type :r2.components]))))))
-             nodes-with-inferred (seq (set (flatten edges)))
-             filtered-edges (filter (fn [[a b]]
-                                      (and (contains? (set nodes) a)
-                                           (contains? (set nodes) b)))
-                                    edges)]
-         (-> (uber/graph)
-             (uber/add-nodes* nodes-with-inferred)
-             (uber/add-directed-edges* filtered-edges))))
-(uber/pprint g)
+                             [e :component :r2]]})
+
+(def g (create-graph-of (xt/db node) {:comp-param [:component :r2]}))
+
 #_(uber/viz-graph g {:filename  (str "./output/graphs/g_at_" tt ".svg")})
-(uber-alg/connected? g)
-(uber-alg/dag? g)
-(uber-alg/loners g)
-
-
-
-
 #_(println (xt/entity-history (xt/db node) :timemeout :desc {:with-docs? true :with-corrections? true}))
-
 
 ;; a single DEVICE is a graph which is a union of the components, firmware, and location
 ;;  
 
-;; Show history of graph... 
+(comment
+  (xt/entity-history (xt/db node) :r2.electromechanical-assembly :desc {:with-docs? true})
+  
+  )
 
-(defn get-edit-points-from-graph
-  "Given a xt db node `node` and a graph `g`, return the distinct timestamps from where any
-   node in that graph has been edited"
-  [node g]
-  (->>
-   (mapcat (partial xt/entity-history (xt/db node)) (uber/nodes g) (repeat :desc))
-   (map ::xt/valid-time)
-   distinct
-   sort))
+;; (hyperfiddle.rcf/enable!)
+(tests
+  ;; Show history of graph... 
+ (render-component-graph-history node :r2)
+ ;; https://graphviz.org/docs/outputs/imap/
+ (get-edit-points-from-graph (xt/db node) g)
+ 
+ )
 
-(def story-points 
-  (get-edit-points-from-graph node g))
-
-(defn make-component-graph
-  ([node]
-   (make-component-graph node nil))
-  ([node time]
-   (let [db (xt/db node time)
-         nodes (reduce concat (xt/q db '{:find [e]
-                                         :where [[e :xt/id]
-                                                 [parent :type :r2.components]]}))
-         edges (seq (xt/q db (update graph-ids :where (fn [x] (vec (conj x ['parent :type :r2.components]))))))
-         nodes-with-inferred (seq (set (flatten edges)))
-         filtered-edges (filter (fn [[a b]]
-                                  (and (contains? (set nodes) a)
-                                       (contains? (set nodes) b)))
-                                edges)]
-     (-> (uber/graph)
-         (uber/add-nodes* nodes-with-inferred)
-         (uber/add-directed-edges* filtered-edges)))))
+;; building a component. 
+;; really, its a strict CONNECTED(?proof?) subgraph of the configuration. nothing more...
 
 
-
-(->>
- story-points
- (map-indexed (fn [idx t] {:n idx
-                           :graph (make-component-graph node t)}))
- (map (fn [{:keys [graph n]}]
-        (uber/viz-graph
-         graph
-         {:save {:format :png
-                 :filename  (str "./output/graphs/g_" (format "%03d" n) ".png")}}))))
+(uber/pprint g)

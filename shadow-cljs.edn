@@ -2,7 +2,7 @@
 {:source-paths
  ["src"
   "test"]
- :deps {:aliases [:pedestal :backend :frontend :unsorted]}
+ :deps {:aliases [:pedestal :backend :frontend :unsorted :cider-clj :tests]}
  :dev-http {8000 "public"} 
  :builds
  {:frontend

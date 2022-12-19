@@ -4,9 +4,10 @@
             [malli.core :as m]
             [malli.util :as mu]
             [mount.core :as mount :refer [defstate]]
-            [xtdb.api :as xt] 
-            [taoensso.tufte :as tufte :refer  [defnp profiled profile]]
-            [ubergraph.core :as uber]))
+            [taoensso.tufte :as tufte :refer  [defnp profile profiled]]
+            [ubergraph.core :as uber]
+            [user :refer [vars->map]]
+            [xtdb.api :as xt]))
 
 
 (defstate db
@@ -20,13 +21,26 @@
  
  needs cycle detection just in case
 "
+
+(defn graph-query-builder
+  ([] (graph-query-builder {}))
+  ([{:keys [child-key]
+     :or {child-key :children}}]
+   {:child-rule ['(child-of [p] c)
+                 ['p child-key 'c]]
+
+    :granddchild-rule
+    ['(child-of [p] c)
+     ['p child-key 'c1]
+     '(child-of c1 c)]}))
+
+(def gqs (graph-query-builder))
+
 (def child-rule
-  '[(child-of [p] c)
-    [p :children c]])
+  (:child-rule gqs))
+
 (def granddchild-rule
-  '[(child-of [p] c)
-    [p :children c1]
-    (child-of c1 c)])
+  (:granddchild-rule gqs))
 
 (def graph-ids-with-grandchildren
   {:find '[parent child]
@@ -102,6 +116,17 @@
         (println failure-text)
         {:error failure-text}))))
 
+
+(defn find-excludes [db id]
+  (disj (set (flatten (seq (xt/q db
+                                 '{:find [e xs]
+                                   :in [id]
+                                   :where [[e :xt/id]
+                                           [e :excludes xs]
+                                           (or [(= xs id)]
+                                               [(= e id)])]}
+                                 id))))
+        id))
 
 
 (comment

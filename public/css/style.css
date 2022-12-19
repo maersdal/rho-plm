@@ -1,2 +1,70 @@
 /* some style */
 
+
+:root {
+    --red-color: #ac3d39;
+    --red-color-10: #bf443f;
+    --red-color-20: #c65652;
+    --red-color-30: #cc6965;
+    --red-color-40: #d27c79;
+    --red-color-50: #d98e8c;
+    --red-color-60: #dfa19f;
+    --red-color-70: #e5b4b2;
+    --red-color-80: #ecc7c5;
+  }
+
+div.page{
+    height: 100%;
+}
+
+div.sidebar {
+    position: absolute;
+    font-family: monospace;
+    left: 8px;
+    padding-left: 5px;
+    width: 10%;
+    background-color: var(--red-color-80);
+}
+
+div.clock {
+    font-family: monospace;
+    color: var(--red-color-40);
+    padding: 0;
+}
+
+/* turn off sidebar mobile */
+@media (max-width: 768px) {
+    sidebar {
+        display: none;
+    }
+}
+
+div.main {
+    min-height: 80vh;
+    width: 75%;
+    /* display: grid; */
+    margin:0 auto;
+    grid-template-rows: auto 1fr auto;
+    background-color: white;
+}
+
+header {
+    display: flex;
+    justify-content: center;
+    word-wrap: break-word;
+    font-size: 80%;
+    /* padding: 5px; */
+    background-color: var(--red-color-40);
+    color: #fff;
+}
+
+footer {
+    display: flex;
+    justify-content: center;
+    font-size: small;
+    font-family: monospace;
+    padding: 5px;
+    background-color: var(--red-color-40);
+    color: #fff;
+}
+

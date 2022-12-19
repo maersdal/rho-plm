@@ -11,11 +11,21 @@
 (println "This text is printed from src/eplme/rhoplm.cljs. Go ahead and edit it and see reloading in action.")
 (defn init []
   (println "init...."))
-(defn multiply [a b] (* a b))
-
 ;; define your app data so that it doesn't get over-written on reload
-(defonce app-state (atom {:text "Hello world!"}))
-
+(defonce app-state (atom {:text "ρ-PLM"
+                          :timer (js/Date.)
+                          :tutorial-step 0}))
+(def tutorial-steps 
+  [[:h3 "This is the tutorial"]
+   [:h3 "It will show you how to display your systems"]])
+(defonce time-updater (js/setInterval
+                       #(swap! app-state assoc :timer (js/Date.)) 1000))
+(comment 
+  ;; devs .. 
+  (swap! app-state assoc :timer (js/Date.))
+  (swap! app-state assoc :text "ρ-PLM")
+  (swap! app-state assoc :tutorial-step 0)
+  )
 (defn get-app-element []
   (gdom/getElement "app"))
 
@@ -33,110 +43,31 @@
                      :children []
                      :data "Child item 3"}})
 
+(defn clock []
+  (let [time-str (str (:timer @app-state))]
+    [:div.clock time-str]))
 
-#_(defn tree-fmt [items]
-  [:ul (tree-seq (fn branch? [m]
-                   (< 0 (count (get m :children []))))
-                 (fn children [node]
-                   (filter
-                    (fn [item])
-                    items)) 
-                 )])
- #_(defn tree-fmt [items node]
-   (let [
-         _ (println (:data node) has-children?)]
-     (if has-children?
-       (let [children (map #(% items) (:children node))]
-         (mapcat (partial tree-fmt items) children))
-       #_(let [newvec (vec (cons :ul (mapv (fn [x]
-                                           (tree-fmt items x)
-                                           #_[:li (:data x)]) (->> (:children node)
-                                                                   (map #(% items))))))]
-         [:ul [:li (:data node)
-               newvec]])
-       #_[:ul (vec (concat [:li (:data node)]
-                           (vec (cons :ul (mapv (fn [child-id] (tree-fmt items (child-id items))) (:children node))))))]
-
-       #_(vec  (concat [:ul [:li (:data node)]]
-                       (mapv (fn [child-id] (tree-fmt items (child-id items))) (:children node))))
-       #_[:ul [:li (:data node)
-               :ul (vec (map (fn [child-id] (tree-fmt items (child-id items))) (:children node)))]]
-       #_[:ul (vec (concat [:li (:data node)] (map (fn [child-id] (tree-fmt items (child-id items))) (:children node))))]
-       [:li (:data node)]))) 
-
-;; [:a [:b :c] :d] < this kind of structure by recursion?
-(def tinytree {:a {:index :a
-                   :children [:b :c]}
-               :b {:index :b
-                   :children []}
-               :c {:index :c
-                   :children []}
-               :d {:index :d
-                   :children []}})
-;; -> 
-;; [:a [:b :c] :d] 
-(def start-node :a)
-#_(s/transform [s/MAP-VALS :children]
-             (fn [x] (println x)
-               identity)
-             tinytree)
-(defn has-children? [m]
-  (< 0 (count (:children m))))
-(->> tinytree
-     (s/transform [s/MAP-VALS :index]
-                  (fn [x]
-                    [:ul [:li x]]))
-     (s/transform [s/MAP-VALS has-children?]
-                  (fn [x] 
-                    (println "qq:" x)
-                    #_(s/transform ) ;; [:ul [:li :c [:ul [:li a] [:li b]]]]
-                    x)))
-#_(defn get-children [tinytree start-node]
-  (map (fn [k] (k tinytree)) (:children (start-node tinytree))))
-
-;; => ([:a ({:index :b, :children []} {:index :c, :children []})] [:b ()] [:c ()] [:d ()])
-
-;; => ([:a ({:index :b, :children []} {:index :c, :children []})] [:b ()] [:c ()] [:d ()]
-#_(map (fn [kid] (tree-fmt items (kid items))) (:children (:root items)))
-;; => ([:li "Child item 1"] [:ul [:li "Child item 2"] [:li "Child item 3"]])
-;; (tree-fmt items (:root items))
-;; => (:li "Child item 1" :li "Child item 3")
-;; => [:ul [:li "Root item" [:ul [:li "Child item 1"] [:ul [:li "Child item 2" [:ul [:li "Child item 3"]]]]]]]
-;; => [:ul [:li "Root item" [:ul [:li "Child item 1"] [:li "Child item 2"]]]]
-;; => [:ul [:li "Root item" [:ul [[:li "Child item 1"] [:li "Child item 2"]]]]]
-;; => 
-
- 
-;; REFERENCE 
- [:ul
-  [:li (:data (:root items))
-   [:ul
-    [:li (:data (:child1 items))]
-    [:ul [:li (:data (:child3 items))]]
-    [:li (:data (:child2 items))]]]]
-
-(filter #{:a } {:a 1 :b 2})
-(cons :ul [:a :b])
-
+(defn tutorial-nav []
+  [:div 
+   [:input {:type "button" :value "back" :on-click #(swap! app-state update :tutorial-step (fn [x] (max 0 (dec x))))}]
+   "." (:tutorial-step @app-state) "."
+   [:input {:type "button" :value "forward" :on-click #(swap! app-state update :tutorial-step (fn [x] (mod (inc x) (count tutorial-steps))))}]
+   (get tutorial-steps (:tutorial-step @app-state))])
 
 (defn hello-world []
-  [:div
-   [:h1 (:text @app-state)]
-   [:h3 "Edit this in src/eplme/rhoplm.cljs and watch it change!"]
-   [:ul [:li "ass"]
-    [:li "bitch"]]
-   [:h3 "auto"]
-  ;;  (tree-fmt items (:root items))
-   [:h3 "manual"]
-   [:ul [:li (:data (:root items))
-         [:ul
-          [:li (:data (:child1 items))]
-          [:ul [:li (:data (:child3 items))]]
-          [:li (:data (:child2 items))]]]]])
+  [:div.page
+   [:header
+    [:h1 (:text @app-state)]]
+   [:div.sidebar 
+    [:p "Sidebar thingy you know.. because we're cool like that."]]
+   [:div.main 
+    [clock]
+    [:h2 "Fact-based graph representation of the lifetime of your system components"]
+    [:div.tutorial
+     [tutorial-nav]]]
+   [:footer
+    [:p "© 2023 Magnus Rentsch Ersdal"]]])
 
-(comment 
-  
-  )
 
 (defn mount [el]
   (rdom/render [hello-world] el))
