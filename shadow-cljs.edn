@@ -2,10 +2,14 @@
 {:source-paths
  ["src"
   "test"]
- :deps {:aliases [:pedestal :backend :frontend :unsorted :cider-clj :tests]}
- :dev-http {8000 "public"} 
+ :deps {:aliases [:backend :frontend :unsorted :cider-clj :tests]}
+ #_#_:dev-http {8000 "resources/public"}  
  :builds
  {:frontend
   {:target :browser
+   :output-dir "resources/public/js"
    :modules {:main {:init-fn eplme.frontend.rhoplm/init}}}}}
 ;; TODO workon this ..
+
+;;{8000 {:root "public"
+;;         :handler eplme.backend.demo-api/handler}}

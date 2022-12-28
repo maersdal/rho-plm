@@ -67,6 +67,8 @@ jspm_packages
 lib/
 cljs-out/
 test-out/
+resources/public/js/
+resources/public/renders/
 
 # This and that
 .nrepl-port

@@ -24,9 +24,9 @@ I think everything stored in a central location is an outdated meme, welcome to 
 Single source of truth immediately requires locking of files... Git got around this, it is workable
 
 Want to integrate:
-product development (plms only do this really...)
-product lifecycle  
-product analysis
+* product development (plms only do this really...)
+* product lifecycle  
+* product analysis
 
 compatible with a modern IT infrastructure, that is, everybody using different tools for everything.
 All we need is an API...
@@ -37,7 +37,9 @@ Everything is a graph, which evolves over time.
 A product type with its different options is a graph 
 Firmware(code) for the product is a graph
 
+### Valid Time
 
+    The valid time of a fact is the time when the fact is true in the modelled reality
 
 
 ### Stories
@@ -86,7 +88,7 @@ clojure -Tclj-new create :template figwheel-main :name eplme/rhoplm :args '["+np
 # User interface
 
 Web based
-needs:
+.needs:
 * Artifact view
 * Search
 * History
@@ -94,11 +96,9 @@ needs:
 ## settings
 
 linter:
-/home/myusername/.config/clj-kondo/config.edn
-:lint-as {...}
+`/home/myusername/.config/clj-kondo/config.edn`
+`:lint-as {...}`
 
 ## License
 
-Copyright © 2018 FIXME
-
-Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
+Copyright © 2023 Magnus

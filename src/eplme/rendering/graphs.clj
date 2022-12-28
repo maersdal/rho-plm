@@ -1,5 +1,6 @@
 (ns eplme.rendering.graphs
   (:require [clojure.java.io :as io]
+            [clojure.java.shell :as sh]
             [clojure.string :as str]
             [ubergraph.core :as uber]
             [taoensso.tufte :as tufte :refer [defnp p profiled profile]]))
@@ -67,4 +68,13 @@
 dot -Timap -og.map -Tpng -og.png -Tcmap -og.cmap g.dot
  
 "
+  (sh/sh "dot" "-V")
+  ;; this is how to render the proper 
+  (sh/sh "dot" 
+         "-Timap" "-og.map"
+         "-Tpng" "-og.png"
+         "-Tcmap" "-og.cmap"
+         "-Tcmap_np" "-og.cmapnp"
+         "g.dot"
+         :dir "./output")
   )

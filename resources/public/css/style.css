@@ -34,7 +34,7 @@ div.clock {
 
 /* turn off sidebar mobile */
 @media (max-width: 768px) {
-    sidebar {
+    div.sidebar {
         display: none;
     }
 }

@@ -84,7 +84,8 @@
  [{:xt/id :r2.electronics
    :current-state :r&d
    :children [:r2.electronics.power
-              :r2.electronics.module]}
+              :r2.electronics.module]
+   :URL "https://miro.com/app/board/uXjVPR86XzI=/?moveToWidget=3458764535189633680&cot=14"}
   #inst "2022-12-10"]
  [{:xt/id :r2.electronics.module
    :components [:ESP32C3_MODULE]
@@ -105,7 +106,8 @@
  [{:xt/id :r2.motor-driver-circuit
    :current-state :r&d
    :spec ["6V with 2A pulse"]
-   :children [:r2.motors]}
+   :children [:r2.motors]
+   :URL "https://miro.com/app/board/uXjVPR86XzI=/?moveToWidget=3458764535186891666&cot=14"}
   #inst "2022-12-12"]
  [{:xt/id :r2.mechatronics
    :current-state :disbanded}

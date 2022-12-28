@@ -1,4 +1,4 @@
-(ns eplme.backend.test-db-usage
+(ns eplme.backend.test-db-design-graphs
   (:require [clojure.edn :as edn]
             [eplme.backend.component-graph :refer [create-graph-of
                                                    get-edit-points-from-graph
@@ -9,65 +9,27 @@
             [taoensso.tufte :as tufte]
             [ubergraph.core :as uber]
             [xtdb.api :as xt]
-            [com.brunobonacci.mulog :as u]))
-
-(tufte/add-basic-println-handler! {})
+            [com.brunobonacci.mulog :as u]
+            [eplme.backend.test-common :refer [node]])
+(:import [java.security MessageDigest]))
+(comment
+  "Design graphs is per project"
+  )
 
 (mount/start)
-(def node (xt/start-node {}))
-
-(def demo-components
-  (mapv (fn [x]
-          (vec (cons ::xt/put (assoc-in x [0 :component] :r2))))
-        (edn/read-string (slurp "src/demodata/demo_components.edn"))))
 
 
+(defn sha256 [string]
+  (let [digest (.digest (MessageDigest/getInstance "SHA-256") (.getBytes string "UTF-8"))]
+    (apply str (map (partial format "%02x") digest))))
 ;; GIT integration..uri
-(def demo-firmware
-  (mapv (fn [x]
-          (vec (cons ::xt/put (assoc-in x [0 :firmware] :r2))))
-        [[{:xt/id :r2.algo-prototype-platform
-           :notes ["Unix C codebase for evaluating algorithms"]
-           :features ["Demo of radix tree 1 second rate-filter for bluetooth"]}
-          #inst "2022-11-14T14"]
-         [{:xt/id :r2.algo-prototype-platform
-           :notes ["Unix C codebase for evaluating algorithms"]
-           :features ["Demo of radix tree 1 second rate-filter for bluetooth"]}
-          #inst "2022-11-14T14"]
-         [{:xt/id :r2.demo-failure
-           :commit-msg "first"
-           :sha (sha256 "first")}
-          #inst "2022-10-14T14"]
-         [{:xt/id :r2.demo-failure
-           :commit-msg "second"
-           :notes ["Failure introduced here for demonstration purposes"] ;; todo write example code on howto find this failure correlation
-           :sha (sha256 "second")}
-          #inst "2022-10-15T14"]
-         [{:xt/id :r2.demo-failure
-           :commit-msg "third"
-           :sha (sha256 "third")}
-          #inst "2022-10-16T14"]]))
 
-(xt/submit-tx node (vec (concat demo-firmware demo-components)))
-(xt/sync node)
-
-
-(def demo-configurations
-  (mapv (fn [x]
-          (vec (cons ::xt/put (assoc-in x [0 :configurations] :r2))))
-        [[{:xt/id :r.configs.2022.11.14
-           :config-snapshot-time #inst "2022-11-14T08"
-           :edges 'edges
-           :nodes 'nodes}
-          #inst "2022-11-14"]]))
 
 (xt/entity (xt/db node) :nrf9160-sparkfun)
 (xt/entity (xt/db node) :computer-feather)
 
 (find-excludes (xt/db node) :nrf9160-sparkfun)
- 
-(defn create-configuration-from-graph [node g name]
-  )
+
 
 (comment
   (def db (xt/db node))
@@ -76,13 +38,9 @@
   (uber/pprint (make-design-graph (xt/db node #inst "2022-12-13T08") :r2))
   (let [component-configuration-graph (make-design-graph node #inst "2022-11-14T08")] ;; still has a lot of choice
     )
+
   
-  (xt/entity (xt/db node) :r.config.2022.11.14)
-
   )
-
-
-
 
 
 (xt/entity-history (xt/db node) :r2.electronics.power :desc {:with-docs? true})
@@ -98,18 +56,10 @@
 #_(println (xt/entity-history (xt/db node) :timemeout :desc {:with-docs? true :with-corrections? true}))
 
 ;; a single DEVICE is a graph which is a union of the components, firmware, and location
-;;  
 
-(defn remove-internal-keys [doc]
-  (dissoc doc :children :leaf :excludes))
-(defn populate-metadata-on-graph [graph db]
-  (reduce (fn [g n]
-            (uber/add-attrs g n (remove-internal-keys (xt/entity db n))))
-          graph
-          (uber/nodes graph)))
 
-(comment 
-  
+(comment
+
   (->> (reduce into []
                (xt/q (xt/db node) '{:find [e]
                                     :where [[e :xt/id]
@@ -119,7 +69,6 @@
        (mapv (fn [m] (dissoc m :children :leaf :excludes))))
   (uber/pprint g)
   (xt/entity-history (xt/db node) :r2.electromechanical-assembly :desc {:with-docs? true})
-  (uber/pprint (populate-metadata-on-graph g (xt/db node)))
   )
 
 ;; (hyperfiddle.rcf/enable!)
@@ -127,9 +76,7 @@
   ;; Show history of graph... 
  (render-design-graph-history node :r2)
  ;; https://graphviz.org/docs/outputs/imap/
- (get-edit-points-from-graph (xt/db node) g)
- 
- )
+ (get-edit-points-from-graph (xt/db node) g))
 
 ;; building a component. 
 ;; really, its a strict CONNECTED(?proof?) subgraph of the configuration. nothing more...

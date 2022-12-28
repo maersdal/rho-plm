@@ -45,7 +45,7 @@
          (uber/add-nodes* nodes-with-inferred)
          (uber/add-directed-edges* filtered-edges)))))
 
-(defn make-component-graph [db component-type]
+(defn make-design-graph [db component-type]
   (create-graph-of db {:comp-param [:component component-type]}))
 
 (defn get-nodes-of-type [db comp-type]
@@ -55,7 +55,7 @@
         comp-type))
 
 
-(defn render-component-graph-history [node comp-type & opts]
+(defn render-design-graph-history [node comp-type & opts]
   (let [db (xt/db node) 
         comp-nodes (get-nodes-of-type db comp-type)
         story-points (->>
@@ -68,7 +68,7 @@
     (->>
      story-points
      (map-indexed (fn [idx t] {:n idx
-                               :graph (make-component-graph (xt/db node t) comp-type)}))
+                               :graph (make-design-graph (xt/db node t) comp-type)}))
      (map (fn [{:keys [graph n]}]
             (uber/viz-graph
              graph

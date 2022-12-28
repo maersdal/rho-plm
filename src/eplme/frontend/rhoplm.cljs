@@ -1,25 +1,85 @@
 (ns eplme.frontend.rhoplm
-  (:require
-   [clojure.walk :refer [postwalk]]
-   [goog.dom :as gdom]
-   [reagent.core :as reagent :refer [atom]]
-   [reagent.dom :as rdom]
-   [clojure.walk :as walk]
-   [com.rpl.specter :as s :refer-macros [select transform]]))
+  (:require [cljs-http.client :as http]
+            [clojure.core.async :refer-macros [go] :refer [<!]]
+            [eplme.frontend.utils :refer [rate-limit]]
+            [goog.dom :as gdom]
+            [reagent.core :as reagent :refer [atom]]
+            [reagent.dom :as rdom]))
 ;;https://github.com/reagent-project/reagent/blob/master/doc/InteropWithReact.md
-
+(def class-api "/api/demo/class-sel/")
 (println "This text is printed from src/eplme/rhoplm.cljs. Go ahead and edit it and see reloading in action.")
 (defn init []
   (println "init...."))
 ;; define your app data so that it doesn't get over-written on reload
 (defonce app-state (atom {:text "ρ-PLM"
-                          :timer (js/Date.)
+                          
                           :tutorial-step 0}))
+(defn simple-getter [api]
+  (let [options (atom nil)
+        _ (go (reset! options (<! (http/get api))))]
+    options))
+
+(defn class-selector []
+  (let [options (simple-getter class-api)]
+    (fn []
+      (into  [:select {:name "classtype"
+                       :on-click #(do)
+                       :on-change #(do (prn (.. % -target -value))
+                                       (swap! app-state assoc :class-select (.. % -target -value)))}]
+             (into [[:option {:value "all"} "Select none"]]
+                   (mapv (fn [v]
+                           [:option {:value v} v])
+                         (js->clj (:body @options))))))))
+
+
+(comment
+  (def result-ref (atom ::new))
+  (defn into-ref [chan]
+    (go (reset! result-ref (<! chan))))
+  (into-ref (http/get class-api))
+  result-ref
+  (let [a (atom nil)
+        ch (http/get class-api)]
+    (go (prn (<! ch))))
+  (:class-select @app-state)
+  (def ff (rate-limit (fn [q p] (prn "ASS!!" q p)) 2000))
+  (ff "qq" "PPP")
+  (def d0 (js/Date.))
+  (def d1 (js/Date.))
+  (- d1 d0)
+  @app-state
+  ;; (go (<! (http/get "api")))
+  (def r (js/fetch "/api/greet/" (clj->js {:headers {:Content-type "application/edn"}
+                                           :method "GET"})))
+
+
+
+  (.-origin js/location)
+  ;; => "http://localhost:8000"
+
+  (clj->js {:headers {:Content-type "application/edn"}
+            :method "GET"})
+  ;; => #js {:headers #js {:Content-type "application/edn"}, :method "GET"}
+  (js/alert "call on meee!")
+  )
+
+(defn call-button []
+  (let [callcount (atom 0)]
+    [:input {:type "Button" :value "HAI"
+             :readOnly true
+             :on-click (fn [_]
+                         (println (if (= 0 (mod (swap! callcount inc) 2))
+                                    "CALL ME!"
+                                    "CALL ON MEEEEE")))}]))
+
 (def tutorial-steps 
   [[:h3 "This is the tutorial"]
-   [:h3 "It will show you how to display your systems"]])
-(defonce time-updater (js/setInterval
-                       #(swap! app-state assoc :timer (js/Date.)) 1000))
+   [:h3 "It will show you how to display your systems"]
+   [:div
+    [:h3 "First:"]
+    [:p "Select your class"]
+    [class-selector]]])
+
 (comment 
   ;; devs .. 
   (swap! app-state assoc :timer (js/Date.))
@@ -43,23 +103,33 @@
                      :children []
                      :data "Child item 3"}})
 
+#_(defonce time-updater (js/setInterval
+                       #(swap! app-state assoc :timer (js/Date.)) 1000))
+
 (defn clock []
-  (let [time-str (str (:timer @app-state))]
-    [:div.clock time-str]))
+  (let [time (atom (js/Date.))
+        time-updater (js/setInterval
+                      #(reset! time (js/Date.)) 1000)]
+    (fn []
+      (let [time-str (str @time)]
+        [:div.clock time-str]))))
 
 (defn tutorial-nav []
   [:div 
-   [:input {:type "button" :value "back" :on-click #(swap! app-state update :tutorial-step (fn [x] (max 0 (dec x))))}]
+   [:input {:type "button" :value "back" :on-click #(swap! app-state update :tutorial-step (fn [x] (mod (dec x) (count tutorial-steps))))}]
    "." (:tutorial-step @app-state) "."
    [:input {:type "button" :value "forward" :on-click #(swap! app-state update :tutorial-step (fn [x] (mod (inc x) (count tutorial-steps))))}]
    (get tutorial-steps (:tutorial-step @app-state))])
-
+(comment 
+  (mod -2 3)
+  )
 (defn hello-world []
   [:div.page
    [:header
     [:h1 (:text @app-state)]]
    [:div.sidebar 
-    [:p "Sidebar thingy you know.. because we're cool like that."]]
+    [:p "Sidebar thingy you know.. because we're cool like that."]
+    [call-button]]
    [:div.main 
     [clock]
     [:h2 "Fact-based graph representation of the lifetime of your system components"]

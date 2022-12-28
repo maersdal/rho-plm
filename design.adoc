@@ -60,8 +60,7 @@ and at the same time have good structure.
 ** `re-frame` and `reagent` as the UI framework. 
 * Backend:
 ** web services:
-*** `pedestal` for serving pages and apis
-*** `reitit` for routing
+*** `ring` and `reitit` for routing
 *** Thinking of adding `pathom` for service resolution
 ** databases and logic
 *** `xtdb` for a bitemporal graph database
@@ -85,3 +84,16 @@ and at the same time have good structure.
 ### Ideas
  
 * Search, elaborate
+
+
+## Learning points 
+
+The nodes have to **point** somewhere, if not they are just org tools.
+
+where do they point? To the resource described. IF it's firmware; the git pull request
+If it is work in progress? maybe these:
+ * Google drive document 
+ * Jira 
+ * Confluence 
+ * Miro 
+ 
