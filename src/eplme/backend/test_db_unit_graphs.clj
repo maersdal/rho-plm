@@ -10,6 +10,7 @@
             [ubergraph.core :as uber]
             [xtdb.api :as xt]
             [com.brunobonacci.mulog :as u]
+            [eplme.backend.time-helper :refer [dt]]
             [eplme.backend.test-common :refer [node]]))
 
 
@@ -43,7 +44,15 @@
                             '{:find [?e]
                               :where [[?e :units _]]})))))
 
-;; firmware upgrade rate per unit
+(defn ms->days [ms]
+  (/ ms 
+     (* 1000.0 3600 24)))
+(defn average [xs]
+  (/ (reduce + xs)
+     (count xs)))
+
+;; change rate per unit, or churn
+;; this is better done with dataframes
 (let [edit-times (sort (seq (set (for [e (all-units node)
                                        h (xt/entity-history (xt/db node) e :desc)]
                                    (::xt/valid-time h)))))
@@ -55,12 +64,38 @@
                                          [?e :firmware-sha ?fw]
                                          [?fw :name ?fwname]
                                          [(get-start-valid-time ?fw) ?t]
-                                         [(get-start-valid-time ?e) ?te]]})))]
-  (reduce 
-   (fn [result edits]
-     (reduce (fn )))
-   #{}
-   edit-documents))
+                                         [(get-start-valid-time ?e) ?te]]})))
+      get-unit-time (fn [[id hash name t-fw t-unit]]
+                      [id t-unit])
+      edit-times-per-unit (reduce
+                           (fn [r [k v]]
+                             (update r k conj v))
+                           {}
+                           (for [d edit-documents
+                                 v d]
+                             (get-unit-time v)))
+      intervals (into {} (->> edit-times-per-unit
+                              (map (fn [[k v]]
+                                     [k  (reduce (let [prev (atom nil)]
+                                                   (fn [r item]
+                                                     (let [p @prev]
+                                                       (reset! prev item)
+                                                       (if (nil? p)
+                                                         r
+                                                         (conj r (dt item p)))))) [] v)]))))
+      flattened (map (fn [[k v] [k2 v2]]
+                       (assert (= k k2))
+                       (merge {:id k :edit-times (vec v2)}
+                              (when (seq v)
+                                {:intervals v})))
+                     (sort intervals)
+                     (sort edit-times-per-unit))]
+(->> flattened
+     (map (fn [m]
+            (if (seq (:intervals m))
+              (assoc m :churn-rate (ms->days (average (:intervals m))))
+              m)))))
+
 
 (comment 
   (mount/stop)
