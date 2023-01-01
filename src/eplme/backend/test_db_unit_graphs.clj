@@ -1,19 +1,11 @@
 (ns eplme.backend.test-db-unit-graphs
-  (:require [clojure.edn :as edn]
-            [eplme.backend.component-graph :refer [create-graph-of
-                                                   get-edit-points-from-graph
-                                                   make-design-graph render-design-graph-history]]
-            [eplme.backend.db-primitives :refer [find-excludes graph-ids]]
-            [hyperfiddle.rcf :refer [tests]]
-            [mount.core :as mount]
-            [taoensso.tufte :as tufte]
-            [ubergraph.core :as uber]
-            [xtdb.api :as xt]
-            [com.brunobonacci.mulog :as u]
+  (:require [eplme.backend.common :refer [average ms->days]]
+            [eplme.backend.test-common :refer [node]]
             [eplme.backend.time-helper :refer [dt]]
-            [eplme.backend.test-common :refer [node]]))
+            [mount.core :as mount]
+            [xtdb.api :as xt]))
 
-
+(mount/start)
 (comment 
   "Questions like:"
   "What units, where"
@@ -22,82 +14,74 @@
   "What is the firmware upgrade rate of the system?"
   )
 
-(xt/q (xt/db node)
-      {:find ['(pull ?e [*])]
-        :where [['?e :units '_]]})
+(defn all-units-with-doc [db]
+  (xt/q db
+        {:find ['(pull ?e [*])]
+         :where [['?e :units '_]]}))
 
-(xt/q (xt/db node)
-      {:find ['(pull ?e [:xt/id :site :location])]
-       :where [['?e :units '_]]})
+(defn site-location-units [db]
+  (xt/q db
+        {:find ['(pull ?e [:xt/id :site :location])]
+         :where [['?e :units '_]]}))
 ;; Note to self, oh this is powerful
 ;; shows the firmwares deployed
-(xt/q (xt/db node)
-      '{:find [?e ?fw ?fwname ?t ?te]
-        :where [[?e :units _]
-                [?e :firmware-sha ?fw]
-                [?fw :name ?fwname]
-                [(get-start-valid-time ?fw) ?t]
-                [(get-start-valid-time ?e) ?te]]})
+(defn units-with-update-and-firmware-time [db]
+  (xt/q db
+        '{:find [?e ?fw ?fwname ?t ?te]
+          :where [[?e :units _]
+                  [?e :firmware-sha ?fw]
+                  [?fw :name ?fwname]
+                  [(get-start-valid-time ?fw) ?t]
+                  [(get-start-valid-time ?e) ?te]]}))
 
 (defn all-units [node]
   (sort (flatten (seq (xt/q (xt/db node)
                             '{:find [?e]
                               :where [[?e :units _]]})))))
-
-(defn ms->days [ms]
-  (/ ms 
-     (* 1000.0 3600 24)))
-(defn average [xs]
-  (/ (reduce + xs)
-     (count xs)))
-
+(defn all-edit-documents-historical [node]
+  (let [edit-times (sort (seq (set (for [e (all-units node)
+                                         h (xt/entity-history (xt/db node) e :desc)]
+                                     (::xt/valid-time h)))))
+        edit-documents (mapcat #(seq (units-with-update-and-firmware-time (xt/db node %))) edit-times)]
+    edit-documents))
 ;; change rate per unit, or churn
-;; this is better done with dataframes
-(let [edit-times (sort (seq (set (for [e (all-units node)
-                                       h (xt/entity-history (xt/db node) e :desc)]
-                                   (::xt/valid-time h)))))
-      edit-documents (for [edit-time edit-times]
-                       (let [db (xt/db node edit-time)]
-                         (xt/q db
-                               '{:find [?e ?fw ?fwname ?t ?te]
-                                 :where [[?e :units _]
-                                         [?e :firmware-sha ?fw]
-                                         [?fw :name ?fwname]
-                                         [(get-start-valid-time ?fw) ?t]
-                                         [(get-start-valid-time ?e) ?te]]})))
-      get-unit-time (fn [[id hash name t-fw t-unit]]
-                      [id t-unit])
-      edit-times-per-unit (reduce
-                           (fn [r [k v]]
-                             (update r k conj v))
-                           {}
-                           (for [d edit-documents
-                                 v d]
-                             (get-unit-time v)))
-      intervals (into {} (->> edit-times-per-unit
-                              (map (fn [[k v]]
-                                     [k  (reduce (let [prev (atom nil)]
-                                                   (fn [r item]
-                                                     (let [p @prev]
-                                                       (reset! prev item)
-                                                       (if (nil? p)
-                                                         r
-                                                         (conj r (dt item p)))))) [] v)]))))
-      flattened (map (fn [[k v] [k2 v2]]
-                       (assert (= k k2))
-                       (merge {:id k :edit-times (vec v2)}
-                              (when (seq v)
-                                {:intervals v})))
-                     (sort intervals)
-                     (sort edit-times-per-unit))]
-(->> flattened
-     (map (fn [m]
-            (if (seq (:intervals m))
-              (assoc m :churn-rate (ms->days (average (:intervals m))))
-              m)))))
-
+(defn calculate-churn-for-all [node]
+  (let [diff1d-m   (let [prev (atom {})]
+                     (fn [r k item]
+                       (let [p (get @prev k)]
+                         (swap! prev assoc k item)
+                         (if (nil? p)
+                           r
+                           (conj r (dt item p)))))) 
+        resultmaps (vals (reduce
+                          (fn [r [id hash name t-fw t-unit]]
+                            (update r id (fn [m]
+                                           (-> m
+                                               ;; wrong ?
+                                               (assoc :id id)
+                                               (update :hash conj hash)
+                                               (update :name conj name)
+                                               (update :diffu  diff1d-m id t-unit)
+                                               (update :tfw conj t-fw)
+                                               (update :tu conj t-unit)))))
+                          {}
+                          (all-edit-documents-historical node)))]
+    (map (fn [m]
+           (if-let [v (:diffu m)] 
+             (assoc m :churn-rate (ms->days (average v)))
+             m))
+         resultmaps)))
+(comment 
+  (require '[criterium.core :as crit])
+  (all-edit-documents-historical node)
+  (calculate-churn-for-all node)
+(crit/with-progress-reporting
+  (crit/quick-bench
+   (calculate-churn-for-all node)))
+  )
 
 (comment 
+  
   (mount/stop)
   (mount/start)
   )
