@@ -1,7 +1,7 @@
-(ns eplme.backend.test-db-unit-graphs
+(ns eplme.dev.test-db-unit-graphs
   (:require [eplme.backend.common :refer [average diff1d-m ms->days]]
             [eplme.backend.fnschemas :refer [check-xt-db check-xt-node]]
-            [eplme.backend.test-common :refer [node]]
+            [eplme.dev.test-common :refer [node]]
             [eplme.backend.time-helper :refer [dt]]
             [mount.core :as mount]
             [xtdb.api :as xt]))

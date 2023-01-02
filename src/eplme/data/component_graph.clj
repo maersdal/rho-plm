@@ -1,4 +1,4 @@
-(ns eplme.backend.component-graph
+(ns eplme.data.component-graph
   (:require [clojure.set :as set]
             [eplme.backend.db-primitives :refer [graph-ids]]
             [mount.core :as mount]
@@ -6,7 +6,8 @@
             [ubergraph.alg :as uber-alg]
             [ubergraph.core :as uber]
             [xtdb.api :as xt]
-            [clojure.edn :as edn]))
+            [clojure.edn :as edn]
+            [clojure.java.io :as io]))
 
 (defn is-subgraph?
   "Is `g-check` contained in `g-ref`?"
@@ -64,7 +65,8 @@
                       distinct
                       sort)
         {:keys [output]
-         :or {output "./output/graphs/"}} opts]
+         :or {output "./output/graphs/"}} opts
+        _ (io/make-parents (str output "tmp"))]
     (->>
      story-points
      (map-indexed (fn [idx t] {:n idx
@@ -74,3 +76,9 @@
              graph
              {:save {:format :png
                      :filename  (str output "g_" (format "%03d" n) ".png")}}))))))
+
+(comment 
+  (require '[eplme.dev.test-common :refer [node]])
+  node
+  (render-design-graph-history node :r2)
+  )

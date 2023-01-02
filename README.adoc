@@ -80,6 +80,13 @@ To create a production build run:
 created with 
 clojure -Tclj-new create :template figwheel-main :name eplme/rhoplm :args '["+npm-bundle","--reagent"]'
 
+logging 
+Zipkin for seeing simple traces, must be upgraded to elasticsearch
+
+    curl -sSL https://zipkin.io/quickstart.sh | bash -s
+    java -jar zipkin.jar
+
+
 ## Already made alternatives 
 
 * Valispace 150€/user/month

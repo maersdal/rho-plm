@@ -1,6 +1,6 @@
-(ns eplme.backend.db-primitives
+(ns eplme.db.primitives
   (:require [clojure.pprint :as pprint]
-            [eplme.backend.db-config :refer [xtdb-settings]]
+            [eplme.db.config :refer [xtdb-settings]]
             [malli.core :as m]
             [malli.util :as mu]
             [mount.core :as mount :refer [defstate]]

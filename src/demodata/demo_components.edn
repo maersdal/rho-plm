@@ -95,13 +95,13 @@
    :notes ["ESP32C3 module works fine, a bit much power consumption"]}
   #inst "2022-12-08"]
  [{:xt/id :r2.electronics.physical.control
-   :current-state :disbanded}
+   :current-state :inactive}
   #inst "2022-12-11"]
  [{:xt/id :r2.mechatronics
-   :current-state :disbanded}
+   :current-state :inactive}
   #inst "2022-12-11"]
  [{:xt/id :r2.electronics.cloud
-   :current-state :disbanded}
+   :current-state :inactive}
   #inst "2022-12-11"]
  [{:xt/id :r2.motor-driver-circuit
    :current-state :r&d
@@ -110,10 +110,10 @@
    :URL "https://miro.com/app/board/uXjVPR86XzI=/?moveToWidget=3458764535186891666&cot=14"}
   #inst "2022-12-12"]
  [{:xt/id :r2.mechatronics
-   :current-state :disbanded}
+   :current-state :inactive}
   #inst "2022-12-12"]
  [{:xt/id :r2.electromechanical-assembly
-   :current-state :disbanded}
+   :current-state :inactive}
   #inst "2022-12-13"]
  [{:xt/id :r2.electronics.power
    :current-state :r&d

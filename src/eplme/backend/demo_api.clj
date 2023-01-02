@@ -1,18 +1,14 @@
 (ns eplme.backend.demo-api
-  (:require
-   [ring.adapter.jetty :as ring-jetty]
-   [ring.middleware.resource :refer [ wrap-resource]]
-   [ring.middleware.refresh :refer [wrap-refresh]]
-   [reitit.ring :as ring]
-   [ring.util.response :as r]
-   [muuntaja.middleware :refer [wrap-format]]
-   [muuntaja.core :as m]
-  ;;  [reitit.ring.middleware.muuntaja :as muuntaja]
-   
-   [mount.core :refer [defstate]]
-   [com.brunobonacci.mulog :as u]
-   [mount.core :as mount]
-   [eplme.backend.loggo :refer [mulog]]))
+  (:require [com.brunobonacci.mulog :as u]
+            [mount.core :refer [defstate]]
+            [mount.core :as mount]
+            [muuntaja.core :as m] ;;  [reitit.ring.middleware.muuntaja :as muuntaja]
+            [muuntaja.middleware :refer [wrap-format]]
+            [reitit.ring :as ring]
+            [ring.adapter.jetty :as ring-jetty]
+            [ring.middleware.refresh :refer [wrap-refresh]]
+            [ring.middleware.resource :refer [wrap-resource]]
+            [xtdb.api :as xt]))
 
 (def m (m/create))
 
@@ -58,14 +54,25 @@
                       :some '(1 2 3)
                       :thingy [:a 1 6]
                       :when {:x :y}}})
-(defn respond-edn-classes-demo [request]
+
+(defn respond-classes [request]
   (u/trace ::serve-classes [] 
-           {:status 200 :body [:prototype :unit :design :firmware]}))
+           {:status 200 :body 
+            (into [] (flatten (seq (xt/q (xt/db node)
+                                         '{:find [cls?]
+                                           :where [[:rhoplm/meta :classes cls?]]}))))
+            }))
+
+
 (defn respond-body [request]
   (u/trace ::serve-index
            []
            {:status 200 :body (index)}))
-
+(def dd (atom nil))
+(comment
+  @dd
+  (:body-params @dd)
+  )
 (def app 
   (-> (ring/ring-handler
        (ring/router
@@ -74,8 +81,11 @@
          ["api/"
           ["greet/" {:handler respond-hello}]
           ["edndemo/" {:handler respond-edn}]
-          ["demo/"
-           ["class-sel/" {:handler respond-edn-classes-demo}]]]]))
+          ["class/" {:get respond-classes
+                     :put (fn [q] 
+                            (reset! dd q)
+                            {:status 204})}]
+          ["demo/" {:handler respond-hello}]]]))
       (wrap-resource "public")
       (wrap-refresh)
       (wrap-format)

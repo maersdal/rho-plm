@@ -1,9 +1,13 @@
-(ns eplme.backend.test-loaders
+(ns eplme.dev.test-loaders
   (:require [clojure.edn :as edn]
             [eplme.backend.common :refer [sha256]]
             [xtdb.api :as xt]))
 
-
+(def demo-meta 
+  (mapv (fn [x]
+          (vec (cons ::xt/put x)))
+        [[{:xt/id :rhoplm/meta
+           :classes #{:component :firmware :units}}]]))
 
 (def demo-components
   (mapv (fn [x]

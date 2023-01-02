@@ -6,7 +6,7 @@
             [reagent.core :as reagent :refer [atom]]
             [reagent.dom :as rdom]))
 ;;https://github.com/reagent-project/reagent/blob/master/doc/InteropWithReact.md
-(def class-api "/api/demo/class-sel/")
+(def class-api "/api/class/")
 (println "This text is printed from src/eplme/rhoplm.cljs. Go ahead and edit it and see reloading in action.")
 (defn init []
   (println "init...."))
@@ -24,8 +24,10 @@
     (fn []
       (into  [:select {:name "classtype"
                        :on-click #(do)
-                       :on-change #(do (prn (.. % -target -value))
-                                       (swap! app-state assoc :class-select (.. % -target -value)))}]
+                       :on-change #(let [v (.. % -target -value)
+                                         _ (prn v)]
+                                     (http/put class-api {:edn-params {:chosen v}})
+                                     (swap! app-state assoc :class-select v))}]
              (into [[:option {:value "all"} "Select none"]]
                    (mapv (fn [v]
                            [:option {:value v} v])
@@ -33,6 +35,7 @@
 
 
 (comment
+  (http/put class-api {:form-params {:demo "vertitude"}})
   (def result-ref (atom ::new))
   (defn into-ref [chan]
     (go (reset! result-ref (<! chan))))
@@ -67,7 +70,7 @@
   (let [callcount (atom 0)]
     [:input {:type "Button" :value "HAI"
              :readOnly true
-             :on-click (fn [_]
+             :on-click (fn [_] 
                          (println (if (= 0 (mod (swap! callcount inc) 2))
                                     "CALL ME!"
                                     "CALL ON MEEEEE")))}]))
@@ -89,20 +92,6 @@
 (defn get-app-element []
   (gdom/getElement "app"))
 
-(def items {:root {:index :root
-                   :isFolder true?
-                   :children [:child1 :child2]
-                   :data "Root item"}
-            :child1 {:index :child1
-                     :children []
-                     :data "Child item 1"}
-            :child2 {:index :child2
-                     :children [:child3]
-                     :data "Child item 2"}
-            :child3 {:index :child3
-                     :children []
-                     :data "Child item 3"}})
-
 #_(defonce time-updater (js/setInterval
                        #(swap! app-state assoc :timer (js/Date.)) 1000))
 
@@ -120,9 +109,7 @@
    "." (:tutorial-step @app-state) "."
    [:input {:type "button" :value "forward" :on-click #(swap! app-state update :tutorial-step (fn [x] (mod (inc x) (count tutorial-steps))))}]
    (get tutorial-steps (:tutorial-step @app-state))])
-(comment 
-  (mod -2 3)
-  )
+
 (defn hello-world []
   [:div.page
    [:header

@@ -1,6 +1,6 @@
-(ns eplme.backend.test-db-design-graphs
+(ns eplme.dev.test-db-design-graphs
   (:require [clojure.edn :as edn]
-            [eplme.backend.component-graph :refer [create-graph-of
+            [eplme.data.component-graph :refer [create-graph-of
                                                    get-edit-points-from-graph
                                                    make-design-graph render-design-graph-history]]
             [eplme.backend.db-primitives :refer [find-excludes graph-ids]]
@@ -10,7 +10,7 @@
             [ubergraph.core :as uber]
             [xtdb.api :as xt]
             [com.brunobonacci.mulog :as u]
-            [eplme.backend.test-common :refer [node]])
+            [eplme.dev.test-common :refer [node]])
 (:import [java.security MessageDigest]))
 (comment
   "Design graphs is per project"
@@ -65,10 +65,12 @@
                                     :where [[e :xt/id]
                                             [e :component :r2]]}))
        (mapv (fn [k] (xt/entity (xt/db node) k)))
-       (remove #(= :disbanded (:current-state %)))
+       (remove #(= :inactive (:current-state %)))
        (mapv (fn [m] (dissoc m :children :leaf :excludes))))
   (uber/pprint g)
   (xt/entity-history (xt/db node) :r2.electromechanical-assembly :desc {:with-docs? true})
+  (mount/stop)
+  (mount/start)
   )
 
 ;; (hyperfiddle.rcf/enable!)
