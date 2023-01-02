@@ -2,11 +2,12 @@
   (:require [cljs-http.client :as http]
             [clojure.core.async :refer-macros [go] :refer [<!]]
             [eplme.frontend.utils :refer [rate-limit]]
-            [goog.dom :as gdom]
+            [goog.dom :as gdom] 
             [reagent.core :as reagent :refer [atom]]
             [reagent.dom :as rdom]))
 ;;https://github.com/reagent-project/reagent/blob/master/doc/InteropWithReact.md
 (def class-api "/api/class/")
+(def map-api "/api/demo/maps/")
 (println "This text is printed from src/eplme/rhoplm.cljs. Go ahead and edit it and see reloading in action.")
 (defn init []
   (println "init...."))
@@ -31,10 +32,13 @@
              (into [[:option {:value "all"} "Select none"]]
                    (mapv (fn [v]
                            [:option {:value v} v])
+                     
                          (js->clj (:body @options))))))))
 
 
 (comment
+  [:div {:dangerouslySetInnerHTML {:__html code}}]
+  (go (prn (:body (<! (http/get "/renders/TEST/g.map"))))) ;; works
   (http/put class-api {:form-params {:demo "vertitude"}})
   (def result-ref (atom ::new))
   (defn into-ref [chan]
@@ -75,13 +79,42 @@
                                     "CALL ME!"
                                     "CALL ON MEEEEE")))}]))
 
+(defn map-disp [mapd]
+  (fn [] 
+    (let [map-loc (:cmap mapd)]
+      (if (= nil map-loc)
+        [:div "Waiting for data..."]
+        (let [data (simple-getter map-loc)]
+          (fn [map-loc]
+            (let [b (js->clj (:body @data))]
+              [:div {:style {"border" "1px solid red"
+                             "scale" "0.5"}}
+               [:p "Map disp"]
+               [:img {:src (:png mapd) 
+                      :useMap "#workmap"}]
+               [:map {:name "workmap"
+                      :dangerouslySetInnerHTML {:__html b}}]])))))))
+
+(defn map-loader []
+  (let [data (simple-getter map-api)]
+    (fn []
+      (let [b (js->clj (:body @data))]
+        [:div [:p "Map-loader"] 
+         [(map-disp b)] 
+         ]))))
+(comment 
+  (slurp "/renders/TEST/g.map"))
+#_(defn map-displayer [map]
+  [map-loader])
+
 (def tutorial-steps 
   [[:h3 "This is the tutorial"]
    [:h3 "It will show you how to display your systems"]
    [:div
     [:h3 "First:"]
     [:p "Select your class"]
-    [class-selector]]])
+    [:div [class-selector]]
+    [:div [map-loader]]]])
 
 (comment 
   ;; devs .. 

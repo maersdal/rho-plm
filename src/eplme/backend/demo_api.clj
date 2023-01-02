@@ -8,8 +8,11 @@
             [ring.adapter.jetty :as ring-jetty]
             [ring.middleware.refresh :refer [wrap-refresh]]
             [ring.middleware.resource :refer [wrap-resource]]
-            [xtdb.api :as xt]))
-
+            [xtdb.api :as xt]
+            ;; so 
+            [eplme.backend.loggo :refer [mulog]]
+            [eplme.dev.test-common :refer [node]]
+            ))
 (def m (m/create))
 
 (def edn-fmt
@@ -85,7 +88,12 @@
                      :put (fn [q] 
                             (reset! dd q)
                             {:status 204})}]
-          ["demo/" {:handler respond-hello}]]]))
+          ["demo/" {:handler respond-hello}
+           ["maps/" {:get (fn [request]
+                            {:status 200
+                             :body {:png "/renders/TEST/g.png"
+                                    :map "/renders/TEST/g.map"
+                                    :cmap "/renders/TEST/g.cmap"}})}]]]]))
       (wrap-resource "public")
       (wrap-refresh)
       (wrap-format)
@@ -99,9 +107,11 @@
 
 
 (comment 
-  (app {:request-method :get :uri "/api/greet/"})
-  (app {:request-method :get :uri "/api/demo/class-sel/"})
+  (app {:request-method :get :uri "/api/greet/"}) 
   (app {:request-method :get :uri "/"})
-
-(mount/start)
+  (app {:request-method :get :uri "/api/demo/maps/"})
+  (mulog)
+  
+(mount/start) 
+  (mount/stop)
   )

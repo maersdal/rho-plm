@@ -5,13 +5,14 @@
             [xtdb.api :as xt]))
 
 (defstate node
+  "Database connection - for now"
   :start (let [node (xt/start-node {})]
            (xt/submit-tx node demo-meta)
            (xt/submit-tx node demo-components)
            (xt/submit-tx node demo-firmware)
            (xt/submit-tx node demo-units)
            node)
-  :stop (.close node)
+  :stop (.close node) 
   )
 
 (comment 
